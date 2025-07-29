@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -11,11 +12,12 @@ type Server struct {
 	HttpServer *http.Server
 }
 
-func NewServer(logger *log.Logger, webDir string) *Server {
+func NewServer(port int, logger *log.Logger, webDir string) *Server {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir(webDir)))
+	addr := fmt.Sprintf(":%d", port)
 	httpServer := &http.Server{
-		Addr:         ":7540",
+		Addr:         addr,
 		Handler:      mux,
 		ErrorLog:     logger,
 		ReadTimeout:  5 * time.Second,
