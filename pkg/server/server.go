@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/ElenaMask/go_final_project/pkg/api"
 )
 
 type Server struct {
@@ -15,6 +17,7 @@ type Server struct {
 func NewServer(port int, logger *log.Logger, webDir string) *Server {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir(webDir)))
+	mux.HandleFunc("/api/nextdate", api.NextDateHandler)
 	addr := fmt.Sprintf(":%d", port)
 	httpServer := &http.Server{
 		Addr:         addr,
