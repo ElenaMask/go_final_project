@@ -14,9 +14,16 @@ type Response struct {
 	Error string `json:"error,omitempty"`
 }
 
-func writeJSON(w http.ResponseWriter, data any) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(data)
+type APITask struct {
+	ID      string `json:"id"`
+	Date    string `json:"date"`
+	Title   string `json:"title"`
+	Comment string `json:"comment"`
+	Repeat  string `json:"repeat"`
+}
+
+func writeError(w http.ResponseWriter, message string) {
+	writeJSON(w, Response{Error: message})
 }
 
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -32,23 +39,23 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var task db.Task
 
 	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-		writeJSON(w, Response{Error: "Некорректный формат JSON"})
+		writeError(w, "Некорректный формат JSON")
 		return
 	}
 
 	if task.Title == "" {
-		writeJSON(w, Response{Error: "Не указан заголовок задачи"})
+		writeError(w, "Не указан заголовок задачи")
 		return
 	}
 
 	if err := checkDate(&task); err != nil {
-		writeJSON(w, Response{Error: err.Error()})
+		writeError(w, err.Error())
 		return
 	}
 
 	id, err := db.AddTask(&task)
 	if err != nil {
-		writeJSON(w, Response{Error: "Ошибка добавления задачи в базу данных"})
+		writeError(w, "Ошибка добавления задачи в базу данных")
 		return
 	}
 
