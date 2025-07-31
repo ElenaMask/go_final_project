@@ -35,6 +35,8 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 		getTaskHandler(w, r)
 	case http.MethodPut:
 		updateTaskHandler(w, r)
+	case http.MethodDelete:
+		deleteTaskHandler(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -166,4 +168,56 @@ func checkDate(task *db.Task) error {
 	}
 
 	return nil
+}
+
+func DoneTaskHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		writeError(w, "Не указан идентификатор задачи")
+		return
+	}
+
+	task, err := db.GetTask(id)
+	if err != nil {
+		writeError(w, "Задача не найдена")
+		return
+	}
+
+	if task.Repeat == "" {
+		err = db.DeleteTask(id)
+		if err != nil {
+			writeError(w, fmt.Sprintf("Ошибка удаления задачи: %v", err))
+			return
+		}
+	} else {
+		now := time.Now()
+		nextDate, err := NextDate(now, task.Date, task.Repeat)
+		if err != nil {
+			writeError(w, fmt.Sprintf("Ошибка расчета следующей даты: %v", err))
+			return
+		}
+		err = db.UpdateDate(nextDate, id)
+		if err != nil {
+			writeError(w, fmt.Sprintf("Ошибка обновления даты задачи: %v", err))
+			return
+		}
+	}
+
+	writeJSON(w, Response{})
+}
+
+func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		writeError(w, "Не указан идентификатор задачи")
+		return
+	}
+
+	err := db.DeleteTask(id)
+	if err != nil {
+		writeError(w, fmt.Sprintf("Ошибка удаления задачи: %v", err))
+		return
+	}
+
+	writeJSON(w, Response{})
 }

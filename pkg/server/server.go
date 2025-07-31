@@ -19,6 +19,7 @@ func NewServer(port int, logger *log.Logger, webDir string) *Server {
 	mux.Handle("/", http.FileServer(http.Dir(webDir)))
 	mux.HandleFunc("/api/nextdate", api.NextDateHandler)
 	mux.HandleFunc("/api/task", api.TaskHandler)
+	mux.HandleFunc("/api/task/done", api.DoneTaskHandler)
 	mux.HandleFunc("/api/tasks", api.TasksHandler)
 	addr := fmt.Sprintf(":%d", port)
 	httpServer := &http.Server{
