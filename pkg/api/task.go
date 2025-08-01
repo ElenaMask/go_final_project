@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -122,6 +123,7 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	err = db.UpdateTask(&task)
 	if err != nil {
 		writeError(w, "Задача не найдена", http.StatusNotFound)
+		log.Println("error on task update in database:", err)
 		return
 	}
 
