@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -21,6 +22,7 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 		now, err = time.Parse(DateFormat, nowParam)
 		if err != nil {
 			http.Error(w, "Invalid now parameter format", http.StatusBadRequest)
+			log.Println("error when parse date param:", err)
 			return
 		}
 	} else {
@@ -30,6 +32,7 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	result, err := NextDate(now, dateParam, repeatParam)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println("error when calculate next task date:", err)
 		return
 	}
 
