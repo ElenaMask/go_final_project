@@ -54,6 +54,7 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := db.AddTask(&task)
 	if err != nil {
+		log.Println("error on adding task to database:", err)
 		writeError(w, "Ошибка добавления задачи в базу данных", http.StatusInternalServerError)
 		return
 	}
@@ -70,6 +71,7 @@ func getTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	t, err := db.GetTask(id)
 	if err != nil {
+		log.Println("error on getting task from database:", err)
 		writeError(w, "Задача не найдена", http.StatusNotFound)
 		return
 	}
@@ -172,6 +174,7 @@ func DoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	task, err := db.GetTask(id)
 	if err != nil {
+		log.Println("error on getting task from database:", err)
 		writeError(w, "Задача не найдена", http.StatusNotFound)
 		return
 	}
@@ -179,6 +182,7 @@ func DoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if task.Repeat == "" {
 		err = db.DeleteTask(id)
 		if err != nil {
+			log.Println("error on deleting task from database:", err)
 			writeError(w, fmt.Sprintf("Ошибка удаления задачи: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -186,11 +190,13 @@ func DoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 		nextDate, err := NextDate(now, task.Date, task.Repeat)
 		if err != nil {
+			log.Println("error on calculating next date:", err)
 			writeError(w, fmt.Sprintf("Ошибка расчета следующей даты: %v", err), http.StatusInternalServerError)
 			return
 		}
 		err = db.UpdateDate(nextDate, id)
 		if err != nil {
+			log.Println("error on updating task date in database:", err)
 			writeError(w, fmt.Sprintf("Ошибка обновления даты задачи: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -208,6 +214,7 @@ func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := db.DeleteTask(id)
 	if err != nil {
+		log.Println("error on deleting task from database:", err)
 		writeError(w, fmt.Sprintf("Ошибка удаления задачи: %v", err), http.StatusInternalServerError)
 		return
 	}
