@@ -142,7 +142,7 @@ func checkDate(task *db.Task) error {
 
 	t, err := time.Parse(DateFormat, task.Date)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse task date: %w", err)
 	}
 
 	if afterNow(now, t) {
@@ -151,14 +151,14 @@ func checkDate(task *db.Task) error {
 		} else {
 			next, err := NextDate(now, task.Date, task.Repeat)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to calculate next date for task: %w", err)
 			}
 			task.Date = next
 		}
 	} else if task.Repeat != "" {
 		_, err := NextDate(now, task.Date, task.Repeat)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to calculate next date for task with repeat: %w", err)
 		}
 	}
 

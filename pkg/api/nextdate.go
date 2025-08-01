@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -48,7 +49,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 
 	startDate, err := time.Parse(DateFormat, dstart)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to parse start date: %w", err)
 	}
 
 	parts := strings.Split(repeat, " ")

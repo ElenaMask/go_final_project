@@ -14,7 +14,7 @@ func AddTask(task *Task) (int64, error) {
 	query := `INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)`
 	res, err := db.Exec(query, task.Date, task.Title, task.Comment, task.Repeat)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to add task: %w", err)
 	}
 	return res.LastInsertId()
 }
@@ -24,7 +24,7 @@ func GetTask(id string) (*Task, error) {
 	query := `SELECT id, date, title, comment, repeat FROM scheduler WHERE id = ?`
 	err := db.QueryRow(query, id).Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get task: %w", err)
 	}
 	return &task, nil
 }
@@ -33,11 +33,11 @@ func UpdateTask(task *Task) error {
 	query := `UPDATE scheduler SET date = ?, title = ?, comment = ?, repeat = ? WHERE id = ?`
 	res, err := db.Exec(query, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to update task: %w", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get rows affected after update: %w", err)
 	}
 	if count == 0 {
 		return fmt.Errorf("incorrect id for updating task")
@@ -48,7 +48,7 @@ func UpdateTask(task *Task) error {
 func Tasks(limit int) ([]*Task, error) {
 	rows, err := db.Query("SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date ASC LIMIT ?", limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query tasks: %w", err)
 	}
 	defer rows.Close()
 
@@ -57,13 +57,13 @@ func Tasks(limit int) ([]*Task, error) {
 		var task Task
 		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan task row: %w", err)
 		}
 		tasks = append(tasks, &task)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error iterating over task rows: %w", err)
 	}
 
 	return tasks, nil
@@ -73,11 +73,11 @@ func DeleteTask(id string) error {
 	query := `DELETE FROM scheduler WHERE id = ?`
 	res, err := db.Exec(query, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete task: %w", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get rows affected after delete: %w", err)
 	}
 	if count == 0 {
 		return fmt.Errorf("task with id %s not found", id)
@@ -89,11 +89,11 @@ func UpdateDate(next string, id string) error {
 	query := `UPDATE scheduler SET date = ? WHERE id = ?`
 	res, err := db.Exec(query, next, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to update task date: %w", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get rows affected after date update: %w", err)
 	}
 	if count == 0 {
 		return fmt.Errorf("task with id %s not found", id)
@@ -105,7 +105,7 @@ func SearchTasks(searchText string, limit int) ([]*Task, error) {
 	query := `SELECT id, date, title, comment, repeat FROM scheduler WHERE title LIKE ? OR comment LIKE ? ORDER BY date LIMIT ?`
 	rows, err := db.Query(query, "%"+searchText+"%", "%"+searchText+"%", limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to search tasks: %w", err)
 	}
 	defer rows.Close()
 
@@ -114,13 +114,13 @@ func SearchTasks(searchText string, limit int) ([]*Task, error) {
 		var task Task
 		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan search task row: %w", err)
 		}
 		tasks = append(tasks, &task)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error iterating over search task rows: %w", err)
 	}
 
 	return tasks, nil
@@ -130,7 +130,7 @@ func GetTasksByDate(date string, limit int) ([]*Task, error) {
 	query := `SELECT id, date, title, comment, repeat FROM scheduler WHERE date = ? ORDER BY date LIMIT ?`
 	rows, err := db.Query(query, date, limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get tasks by date: %w", err)
 	}
 	defer rows.Close()
 
@@ -139,13 +139,13 @@ func GetTasksByDate(date string, limit int) ([]*Task, error) {
 		var task Task
 		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan task by date row: %w", err)
 		}
 		tasks = append(tasks, &task)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error iterating over tasks by date rows: %w", err)
 	}
 
 	return tasks, nil
