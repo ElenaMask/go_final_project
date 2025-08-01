@@ -30,7 +30,7 @@ func TasksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		writeError(w, "Ошибка получения задач из базы данных")
+		writeError(w, "Ошибка получения задач из базы данных", http.StatusInternalServerError)
 		return
 	}
 

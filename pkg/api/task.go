@@ -10,21 +10,12 @@ import (
 	"github.com/ElenaMask/go_final_project/pkg/db"
 )
 
-type Response struct {
-	ID    string `json:"id,omitempty"`
-	Error string `json:"error,omitempty"`
-}
-
 type APITask struct {
 	ID      string `json:"id"`
 	Date    string `json:"date"`
 	Title   string `json:"title"`
 	Comment string `json:"comment"`
 	Repeat  string `json:"repeat"`
-}
-
-func writeError(w http.ResponseWriter, message string) {
-	writeJSON(w, Response{Error: message})
 }
 
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -46,23 +37,23 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var task db.Task
 
 	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-		writeError(w, "Некорректный формат JSON")
+		writeError(w, "Некорректный формат JSON", http.StatusBadRequest)
 		return
 	}
 
 	if task.Title == "" {
-		writeError(w, "Не указан заголовок задачи")
+		writeError(w, "Не указан заголовок задачи", http.StatusBadRequest)
 		return
 	}
 
 	if err := checkDate(&task); err != nil {
-		writeError(w, err.Error())
+		writeError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	id, err := db.AddTask(&task)
 	if err != nil {
-		writeError(w, "Ошибка добавления задачи в базу данных")
+		writeError(w, "Ошибка добавления задачи в базу данных", http.StatusInternalServerError)
 		return
 	}
 
@@ -72,13 +63,13 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 func getTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		writeError(w, "Не указан идентификатор")
+		writeError(w, "Не указан идентификатор", http.StatusBadRequest)
 		return
 	}
 
 	t, err := db.GetTask(id)
 	if err != nil {
-		writeError(w, "Задача не найдена")
+		writeError(w, "Задача не найдена", http.StatusNotFound)
 		return
 	}
 	apiTask := &APITask{
@@ -96,12 +87,12 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var apiTask APITask
 
 	if err := json.NewDecoder(r.Body).Decode(&apiTask); err != nil {
-		writeError(w, "Некорректный формат JSON")
+		writeError(w, "Некорректный формат JSON", http.StatusBadRequest)
 		return
 	}
 	id, err := strconv.ParseInt(apiTask.ID, 10, 64)
 	if err != nil {
-		writeError(w, "Некорректный идентификатор задачи")
+		writeError(w, "Некорректный идентификатор задачи", http.StatusBadRequest)
 		return
 	}
 
@@ -114,23 +105,23 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if task.ID == 0 {
-		writeError(w, "Не указан идентификатор задачи")
+		writeError(w, "Не указан идентификатор задачи", http.StatusBadRequest)
 		return
 	}
 
 	if task.Title == "" {
-		writeError(w, "Не указан заголовок задачи")
+		writeError(w, "Не указан заголовок задачи", http.StatusBadRequest)
 		return
 	}
 
 	if err := checkDate(&task); err != nil {
-		writeError(w, err.Error())
+		writeError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = db.UpdateTask(&task)
 	if err != nil {
-		writeError(w, "Задача не найдена")
+		writeError(w, "Задача не найдена", http.StatusNotFound)
 		return
 	}
 
@@ -173,32 +164,32 @@ func checkDate(task *db.Task) error {
 func DoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		writeError(w, "Не указан идентификатор задачи")
+		writeError(w, "Не указан идентификатор задачи", http.StatusBadRequest)
 		return
 	}
 
 	task, err := db.GetTask(id)
 	if err != nil {
-		writeError(w, "Задача не найдена")
+		writeError(w, "Задача не найдена", http.StatusNotFound)
 		return
 	}
 
 	if task.Repeat == "" {
 		err = db.DeleteTask(id)
 		if err != nil {
-			writeError(w, fmt.Sprintf("Ошибка удаления задачи: %v", err))
+			writeError(w, fmt.Sprintf("Ошибка удаления задачи: %v", err), http.StatusInternalServerError)
 			return
 		}
 	} else {
 		now := time.Now()
 		nextDate, err := NextDate(now, task.Date, task.Repeat)
 		if err != nil {
-			writeError(w, fmt.Sprintf("Ошибка расчета следующей даты: %v", err))
+			writeError(w, fmt.Sprintf("Ошибка расчета следующей даты: %v", err), http.StatusInternalServerError)
 			return
 		}
 		err = db.UpdateDate(nextDate, id)
 		if err != nil {
-			writeError(w, fmt.Sprintf("Ошибка обновления даты задачи: %v", err))
+			writeError(w, fmt.Sprintf("Ошибка обновления даты задачи: %v", err), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -209,13 +200,13 @@ func DoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		writeError(w, "Не указан идентификатор задачи")
+		writeError(w, "Не указан идентификатор задачи", http.StatusBadRequest)
 		return
 	}
 
 	err := db.DeleteTask(id)
 	if err != nil {
-		writeError(w, fmt.Sprintf("Ошибка удаления задачи: %v", err))
+		writeError(w, fmt.Sprintf("Ошибка удаления задачи: %v", err), http.StatusInternalServerError)
 		return
 	}
 
